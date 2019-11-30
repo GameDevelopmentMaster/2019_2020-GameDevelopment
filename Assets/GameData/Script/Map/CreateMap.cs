@@ -2,58 +2,50 @@
 
 public class MapNode
 {
-    
+
     private MapNode leftNode;
     private MapNode rightNode;
     private MapNode parentNode;
     private MapNode nextParentNode;
 
-    private ref MapNode NextParentNode => ref nextParentNode;
-
-
     string nameData;
-    MapNode GetLeftLastNode()
+    public MapNode GetLeftLastNode()
     {
         return leftNode.leftNode == null ? leftNode : leftNode.GetLeftLastNode();
     }
-    MapNode GetRightLastNode()
+    public MapNode GetRightLastNode()
     {
         return rightNode.rightNode == null ? rightNode : rightNode.GetRightLastNode();
     }
-   public MapNode GetLeftNode()
-    {
-        return leftNode.leftNode == null ? leftNode : leftNode.leftNode;
-    }
-    public MapNode GetRIghtNode()
-    {
-        return rightNode.rightNode == null ? rightNode : rightNode.rightNode;
-    }
-    public  MapNode GetParentNode()
+    
+    public MapNode GetParentNode()
     {
         return parentNode;
     }
 
     Data nodeData = new Data();
+
+
     public ref Data NodeData
-    { 
+    {
         get { return ref nodeData; }
-        
+
     }
     public MapNode()
     {
-        nodeData.x = nodeData.y = 0f;
-        nodeData.width = 300f;
-        nodeData.height = 200f;
+        NodeData.x = NodeData.y = 0f;
+        NodeData.width = 300f;
+        NodeData.height = 200f;
         parentNode = this;
     }
 
     public MapNode(Data size)
     {
-        nodeData.x = size.x;
-        nodeData.y = size.y;
-        nodeData.width = size.width;
-        nodeData.height = size.height;
-        
+        NodeData.x = size.x;
+        NodeData.y = size.y;
+        NodeData.width = size.width;
+        NodeData.height = size.height;
+
     }
     public MapNode(MapNode ParentNode)
     {
@@ -64,79 +56,75 @@ public class MapNode
     {
         ParentNode.rightNode = new MapNode(ParentNode);
         ParentNode.leftNode = new MapNode(ParentNode);
-        ParentNode.leftNode.NextParentNode = ParentNode.rightNode;
+        ParentNode.leftNode.nextParentNode = ParentNode.rightNode;
     }
 
-    
+
     public void AddNode()
     {
-        if(rightNode == null && leftNode == null)
+        if (rightNode == null && leftNode == null)
         {
             rightNode = new MapNode(parentNode);
             leftNode = new MapNode(parentNode);
-            leftNode.NextParentNode = rightNode;
-                
+            leftNode.nextParentNode = rightNode;
+
         }
         else
         {
             MapNode getNextNode = GetLeftLastNode();
-            MapNode getRightNode =GetRightLastNode(),  checkNode = GetRightLastNode();
-            while(getNextNode != checkNode.nextParentNode)
+            MapNode getRightNode = GetRightLastNode(), checkNode = GetRightLastNode();
+            while (getNextNode != checkNode.nextParentNode)
             {
                 AddChild(getNextNode);
                 getRightNode.nextParentNode = getNextNode.leftNode;
                 getRightNode = getNextNode.rightNode;
-                getNextNode = getNextNode.NextParentNode;
+                getNextNode = getNextNode.nextParentNode;
             }
         }
     }
-    
+
     public void MapCut(int count)
     {
-        for(int i=0; i<count; i++)
+        for (int i = 0; i < count; i++)
         {
             if (GetParentNode() != null)
             {
                 AddNode();
-                switch ((Dir)UnityEngine.Random.Range(0, 2))
+                MapNode cutNode = GetLeftLastNode().parentNode;
+                MapNode checkNode = GetRightLastNode().parentNode;
+                while (cutNode != checkNode.nextParentNode)
                 {
-                    case Dir.horizontal:
-                        HorizontalCut();
-                        break;
+                    switch ((Dir)UnityEngine.Random.Range(0, 2))
+                    {
+                        case Dir.horizontal:
+                            HorizontalCut(cutNode);
+                            break;
 
-                    case Dir.vertical:
-                        VerticalCut();
-                        break;
+                        case Dir.vertical:
+                            VerticalCut(cutNode);
+                            break;
+                    }
+                    cutNode = cutNode.nextParentNode;
                 }
             }
 
         }
-        
+
     }
     /// <summary>
     /// Cut Map Data is Vertical
     /// </summary>
-    void VerticalCut() 
+    void VerticalCut(MapNode cutNode)
     {
-        MapNode cutNode = GetLeftLastNode().parentNode;
-        MapNode checkNode = GetRightLastNode().parentNode;
+        cutNode.leftNode.NodeData.x = cutNode.rightNode.NodeData.x = cutNode.NodeData.x;
+        cutNode.leftNode.NodeData.width = cutNode.rightNode.NodeData.width = cutNode.NodeData.width;
 
-        while (cutNode != checkNode.NextParentNode)
-        {
+        cutNode.leftNode.NodeData.height = UnityEngine.Random.Range(cutNode.NodeData.height * 0.3f, cutNode.NodeData.height * 0.7f);
+        cutNode.leftNode.NodeData.y = cutNode.NodeData.y - (cutNode.NodeData.height - cutNode.leftNode.NodeData.height);
 
-            cutNode.leftNode.NodeData.x = cutNode.rightNode.NodeData.x = cutNode.NodeData.x;
-            cutNode.leftNode.NodeData.width = cutNode.rightNode.NodeData.width = cutNode.NodeData.width;
+        cutNode.rightNode.NodeData.height = cutNode.NodeData.height - cutNode.leftNode.NodeData.height;
+        cutNode.rightNode.NodeData.y = cutNode.NodeData.y + (cutNode.NodeData.height - cutNode.rightNode.NodeData.height);
 
-            cutNode.leftNode.NodeData.height = UnityEngine.Random.Range(cutNode.NodeData.height * 0.3f, cutNode.NodeData.height * 0.7f);
-            cutNode.leftNode.NodeData.y = cutNode.NodeData.y - (cutNode.NodeData.height - cutNode.leftNode.NodeData.height) / 2f;
-
-            cutNode.rightNode.NodeData.height = cutNode.NodeData.height - cutNode.leftNode.NodeData.height;
-            cutNode.rightNode.NodeData.y = cutNode.NodeData.y + (cutNode.NodeData.height - cutNode.rightNode.NodeData.height) / 2f;
-
-
-
-            cutNode = cutNode.NextParentNode;
-        }
 
         #region Old Code
 
@@ -188,25 +176,17 @@ public class MapNode
     /// <summary>
     /// Cut Map Data is Horizontal
     /// </summary>
-    void HorizontalCut()
+    void HorizontalCut(MapNode cutNode)
     {
-        MapNode cutNode = GetLeftLastNode().parentNode;
-        MapNode checkNode = GetRightLastNode().parentNode;
 
-        while(cutNode != checkNode.NextParentNode)
-        {
-            cutNode.leftNode.NodeData.y = cutNode.rightNode.NodeData.y = cutNode.NodeData.y;
-            cutNode.leftNode.NodeData.height = cutNode.rightNode.NodeData.height = cutNode.NodeData.height;
+        cutNode.leftNode.NodeData.y = cutNode.rightNode.NodeData.y = cutNode.NodeData.y;
+        cutNode.leftNode.NodeData.height = cutNode.rightNode.NodeData.height = cutNode.NodeData.height;
 
-            cutNode.leftNode.NodeData.width = UnityEngine.Random.Range(cutNode.NodeData.width * 0.3f, cutNode.NodeData.width * 0.7f);
-            cutNode.leftNode.NodeData.x = cutNode.NodeData.x - (cutNode.NodeData.width - cutNode.leftNode.NodeData.width) / 2f;
+        cutNode.leftNode.NodeData.width = UnityEngine.Random.Range(cutNode.NodeData.width * 0.3f, cutNode.NodeData.width * 0.7f);
+        cutNode.leftNode.NodeData.x = cutNode.NodeData.x - (cutNode.NodeData.width - cutNode.leftNode.NodeData.width);
 
-            cutNode.rightNode.NodeData.width = cutNode.NodeData.width - cutNode.leftNode.NodeData.width;
-            cutNode.rightNode.NodeData.x = cutNode.NodeData.x + (cutNode.NodeData.width - cutNode.rightNode.NodeData.width)/2f;
-
-            cutNode = cutNode.nextParentNode;
-        }
-
+        cutNode.rightNode.NodeData.width = cutNode.NodeData.width - cutNode.leftNode.NodeData.width;
+        cutNode.rightNode.NodeData.x = cutNode.NodeData.x + (cutNode.NodeData.width - cutNode.rightNode.NodeData.width);
         #region OldCode
 
         #region 0.2ver
@@ -253,10 +233,10 @@ public class MapNode
 
     private Data[] GetNodeData()
     {
-        MapNode checkNode = GetLeftLastNode();
+        MapNode checkNode = leftNode ;
 
         List<Data> getNodeData = new List<Data>();
-        while(checkNode != null)
+        while (checkNode != null)
         {
             getNodeData.Add(checkNode.nodeData);
             checkNode = checkNode.nextParentNode;
@@ -267,12 +247,12 @@ public class MapNode
     public UnityEngine.Vector3[] SetPos()
     {
         UnityEngine.Vector3[] valuePos = new UnityEngine.Vector3[GetNodeData().Length];
-
-        for(int i=0; i<valuePos.Length; i++)
+        Data[] getNodeData = GetNodeData();
+        for (int i = 0; i < valuePos.Length; i++)
         {
             valuePos[i] = new UnityEngine.Vector3();
-            valuePos[i].x = GetNodeData()[i].x;
-            valuePos[i].z = GetNodeData()[i].y;
+            valuePos[i].x = getNodeData[i].x;
+            valuePos[i].z = getNodeData[i].y;
         }
         return valuePos;
     }
@@ -280,17 +260,18 @@ public class MapNode
     public UnityEngine.Vector3[] SetSize()
     {
         UnityEngine.Vector3[] valueSize = new UnityEngine.Vector3[GetNodeData().Length];
-        for(int i=0; i<valueSize.Length; i++)
+        Data[] getNodeData = GetNodeData();
+        for (int i = 0; i < valueSize.Length; i++)
         {
             valueSize[i] = new UnityEngine.Vector3();
-            valueSize[i].x = GetNodeData()[i].width;
+            valueSize[i].x = getNodeData[i].width;
             valueSize[i].y = 11f;
-            valueSize[i].z = GetNodeData()[i].height;
+            valueSize[i].z = getNodeData[i].height;
         }
         return valueSize;
     }
 
-   public struct Data
+    public struct Data
     {
         public float x;
         public float y;
@@ -305,7 +286,7 @@ public class MapNode
             height = setValue.height;
         }
     }
-    
+
 }
 
 
